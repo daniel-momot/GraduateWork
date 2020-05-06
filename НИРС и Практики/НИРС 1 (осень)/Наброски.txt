@@ -1,0 +1,9 @@
+Сравнение скорости:
+https://www.cryptopp.com/benchmarks.html - 2009 год
+https://stackoverflow.com/questions/10070293/choosing-a-hash-function-for-best-performance
+https://automationrhapsody.com/md5-sha-1-sha-256-sha-512-speed-performance/
+https://crypto.stackexchange.com/questions/31674/what-advantages-does-keccak-sha-3-have-over-blake2
+
+https://wireilla.com/papers/ijcis/V3N3/3313ijcis01.pdf
+
+https://ieeexplore.ieee.org/document/8710753/keywords#keywords
