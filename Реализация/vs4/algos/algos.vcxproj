@@ -145,12 +145,12 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="aes1.cpp" />
     <ClCompile Include="algos.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aes1.h" />
     <ClInclude Include="aes2.h" />
+    <ClInclude Include="aes3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
