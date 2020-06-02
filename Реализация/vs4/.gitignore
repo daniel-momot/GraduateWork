@@ -1,0 +1,18 @@
+#Folders
+**/Debug/**/*
+**/Release/**/*
+**/.vs/**/*
+!base/**/*
+
+# Executables
+**/*.exe
+**/*.dll
+**/*.out
+**/*.bat
+
+# service files
+**/*.suo
+**/*.sdf
+**/*.opensdf
+
+!release/**/*
