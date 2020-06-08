@@ -1,0 +1,26 @@
+
+_encrypt:
+
+pushad
+lea    esi,[esp+32+4]
+lodsd
+xchg   eax, ecx          ; ecx = len
+lodsd
+xchg   eax, ebp          ; ebp = ctr
+lodsd
+xchg   eax, edx          ; edx = in
+lodsd
+xchg   esi, eax          ; esi = key
+pushad                   ; alloca(32)
+lea    edi, [esp+16]     ; edi = &t[16]
+movsd
+movsd
+movsd
+movsd
+
+
+
+
+
+
+
