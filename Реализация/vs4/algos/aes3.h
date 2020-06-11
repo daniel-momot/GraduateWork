@@ -46,85 +46,11 @@ void E(B *s){
 
 const void* get_func(void* page) {
 
-	/*const byte init[] = {
-		0x00, 0x00,
-		0x60,									// pusha
-		0x8D, 0x74, 0x24, 0x24,					// lea    esi,[esp+0x24]
-		0xAD,									// lodsd
-		0x91,									// xchg   ecx,eax
-		0xAD,									// lodsd
-		0x95,									// xchg   ebp,eax
-		0xAD,									// lodsd
-		0x92,									// xchg   edx,eax
-		0xAD,									// lodsd
-		0x96,									// xchg   esi,eax
-		0x60,									// pusha
-		0x8D, 0x7C, 0x24, 0x10,					// lea    edi,[esp+0x10]
-		0xA5,									// movsd
-		0xA5,									// movsd
-		0xA5,									// movsd
-		0xA5									// movsd
-	};
-
-	const byte jmp1 = 0;
-	const byte jmp2 = 0;
-	const byte jmp3 = 0;
-
-	const byte aes_l0[] = {
-		0x31, 0xC0,								// xor    eax,eax
-		0xE3, 0xFF,								// jecxz  3 <_main+0x3>
-		0x89, 0xE7,								// mov    edi,esp
-		0x89, 0xEE,								// mov    esi,ebp
-		0x57,									// push   edi
-		0xA5,									// movsd
-		0xA5,									// movsd
-		0xA5,									// movsd
-		0xA5,									// movsd
-		0xE8, 0xFC, 0xFF, 0xFF, 0xFF,			// call   e <_main+0xe>
-		0x5F									// pop    edi
-	};
-
-	const byte aes_11[] = {
-		0x8A, 0x1C, 0x07,						// mov    bl, [edi+eax]
-		0x30, 0x1A,								// xor    [edx],bl
-		0x42,									// inc    edx
-		0x40,									// inc    eax
-		0x3C, 0x10,								// cmp    al,0x10
-		0xE0, 0xFF,								// loopne a <_main+0xa>
-		0x91,									// xchg   ecx,eax
-		0xB1, 0x10 								// mov    cl,0x10
-	};
-
-	const byte aes_12[] = {
-		0x00,									// ???
-		0x00,									// ???
-		0x91,									// xchg   ecx,eax
-		0xE9, 0x00, 0x00, 0x00, 0x00			// jmp    6 <_main+0x6>
-	};
-
-	const byte aes_13[] = {
-		0x61,									// popa
-		0x61,									// popa
-		0xC3									// ret
-	};
-
-	const byte* srcs[] = { init, aes_l0, aes_11, aes_12, aes_13 };
-
-	const size_t size_all = sizeof(init) + sizeof(aes_l0) + sizeof(aes_11) + sizeof(aes_12) + sizeof(aes_13);
-	byte* func = (byte*) malloc(size_all);
-
-	memcpy(func, init, sizeof(init));
-	memcpy(func + sizeof(init), aes_l0, sizeof(aes_l0));
-	memcpy(func + sizeof(init) + sizeof(aes_l0), aes_11, sizeof(aes_11));
-	memcpy(func + sizeof(init) + sizeof(aes_l0) + sizeof(aes_11), aes_12, sizeof(aes_12));
-	memcpy(func + sizeof(init) + sizeof(aes_l0) + sizeof(aes_11) + sizeof(aes_12), aes_13, sizeof(aes_13));
-
-	return func;*/
-
 	void* place = page;
 
 	const byte init[] = {
-		//0x60,									// pusha
+		0x60,									// pusha
+		//0x50, 0x53, 0x51, 0x52, 0x56, 0x57, 0x55, // push eax, ebx, ecx, edx, esi, edi, ebp // нов
 		0x31, 0xC9,								// xor    ecx,ecx
 		0xF7, 0xE1,								// mul    ecx
 		0x40,									// inc    eax
@@ -138,8 +64,137 @@ const void* get_func(void* page) {
 		0x61									// popa
 	};
 
-	memcpy(place, init, sizeof(init));
-	place = (byte*) place + sizeof(init);
+	const byte mult[] = {
+		//0xE8, 0x10, 0x00, 0x00, 0x00,	// call   15 <_main+0x15>
+		0x51,							// push   ecx
+		0xB1, 0x04,						// mov    cl,0x4
+		//0xB5, 0x00,						// mov ch, 0 // нов
+		0x00, 0xC0,						// add    al,al
+		0x73, 0x02,						// jae    $ + 4
+		0x34, 0x1B,						// xor    al,0x1b
+		0xC1, 0xC8, 0x08,				// ror    eax,0x8
+		0xE2, 0xF5,						// loop   $ - 9
+		0x59,							// pop    ecx
+		0xC3,							// ret
+		//0x5D							// pop    ebp
+	};
+
+	byte sub_byte1[] = {
+		0x60,								// pusha
+		0x84, 0xC0,							// test   al,al
+		0x74, 0x34,							// je     sub_byte5
+		0x92,								// xchg   edx,eax
+		0xB1, 0xFF,							// mov    cl,0xff
+	};
+
+	const byte sub_byte2[] = {
+		0xB0, 0x01,							// mov    al,0x1
+		0x84, 0xE4,							// test   ah,ah
+		0x75, 0x07,							// jne    sub_byte3
+		0x38, 0xD0,							// cmp    al,dl
+		0x0F, 0x94, 0xC4,					// sete   ah
+		0x74, 0xF3,							// je     sub_byte2
+	};
+
+
+
+
+
+
+
+
+	byte sub_byte3[] = {
+		0x88, 0xC6,							// mov    dh,al
+		0xFF, 0xD5,							// call   ebp
+		0x30, 0xF0,							// xor    al,dh
+		0xE2, 0xED,							// loop   sub_byte2 ( + 2)
+		0x88, 0xC2,							// mov    dl,al
+		0xB1, 0x04,							// mov    cl,0x4
+											// <--------------------|
+		0xD0, 0xC2,							// rol    dl,1          |
+		0x30, 0xD0,							// xor    al,dl         |
+		0xE2, 0xFA,							// loop ----------------|
+	};
+
+	//byte i1 = (byte) (sizeof(sub_byte3) + sizeof(sub_byte2) + 3);
+	//byte i2 = (byte) ( 0 - (int) sizeof(sub_byte2) - 6 );
+
+	//sub_byte1[4] = i1;
+	//sub_byte3[7] = i2;
+
+	const byte sub_byte5[] = {
+		0x34, 0x63,							// xor    al,0x63
+		0x88, 0x44, 0x24, 0x1C,				// mov    [esp+0x1c],al
+		0x61,								// popa
+		0xC3								// ret
+	};
+
+	const byte b1[] = {
+		0x60,								// pusha
+		0x92,								// xchg   edx,eax
+		0x87, 0xFE,							// xchg   esi,edi
+		0x8B, 0x46, 0x1C,					// mov    eax, [esi+0x1c]
+		0xC1, 0xC8, 0x08,					// ror    eax,0x8
+	};
+
+	const byte b2[] = {
+											//   <---------------------|
+		0x8B, 0x5E, 0x10,					// mov    ebx, [esi+0x10]  |
+		0x31, 0x1E,							// xor    [esi],ebx        |
+		0xA5,								// movsd                   |
+		0xE8, 0xFC, 0xFF, 0xFF, 0xFF,		// call   ?                |
+		0xC1, 0xC8, 0x08,					// ror    eax,0x8    
+	};
+		
+	byte b3[] = {
+		0xE2, 0xF0,							// loop   -----------------|
+		0x31, 0xD0,							// xor    eax,edx
+		0xB1, 0x04,							// mov    cl,0x4
+											//   <---------------------|
+		0x31, 0x06,							// xor    [esi],eax        |
+		0xAD,								// lodsd                   |
+		0xE2, 0xFB,							// loop   -----------------|
+		0x61								// popa
+	};
+
+	b3[1] = (byte) (0 - sizeof(b2) - 2);
+
+	//const byte fin[] = {
+	//	0x5D, 0x5F, 0x5E, 0x5A, 0x59, 0x5B, 0x58 // pop ebp, edi, esi, edx, ecx, ebx, eax
+	//};
+
+	//memcpy(place, init, sizeof(init));
+	//place = (byte*) place + sizeof(init);
+
+	//memcpy(place, mult, sizeof(mult));
+	//place = (byte*) place + sizeof(mult);
+
+	//memcpy(place, fin, sizeof(fin));
+	//place = (byte*) place + sizeof(fin);
+
+	//memcpy(place, sub_byte1, sizeof(sub_byte1));
+	//place = (byte*) place + sizeof(sub_byte1);
+
+	//memcpy(place, sub_byte2, sizeof(sub_byte2));
+	//place = (byte*) place + sizeof(sub_byte2);
+
+	//memcpy(place, sub_byte3, sizeof(sub_byte3));
+	//place = (byte*) place + sizeof(sub_byte3);
+
+	//memcpy(place, sub_byte4, sizeof(sub_byte4));
+	//place = (byte*) place + sizeof(sub_byte4);
+
+	//memcpy(place, sub_byte5, sizeof(sub_byte5));
+	//place = (byte*) place + sizeof(sub_byte5);
+
+	memcpy(place, b1, sizeof(b1));
+	place = (byte*) place + sizeof(b1);
+
+	memcpy(place, b2, sizeof(b2));
+	place = (byte*) place + sizeof(b2);
+
+	memcpy(place, b3, sizeof(b3));
+	place = (byte*) place + sizeof(b3);
 
 	return page;
 }

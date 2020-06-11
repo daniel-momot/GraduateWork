@@ -34,21 +34,21 @@ void main() {
 
 	size_t t1, t2;
 	t1 = clock();
-	for (size_t i = 0; i < 10000; i++)
+	for (size_t i = 0; i < 1000; i++)
 		E(concat_input);
 	t2 = clock();
 
 	double diff1 = (double(t2 - t1)) / CLOCKS_PER_SEC;
 
 	t1 = clock();
-	for (size_t i = 0; i < 10000; i++)
+	for (size_t i = 0; i < 1000; i++)
 		AESEncryption(plaintext, keyExpansion(key), ciphertext);
 	t2 = clock();
 
 	double diff2 = (double(t2 - t1)) / CLOCKS_PER_SEC;
 
 	t1 = clock();
-	for (size_t i = 0; i < 10000; i++)
+	for (size_t i = 0; i < 1000; i++)
 		EncryptAES128(plaintext, key, ciphertext);
 	t2 = clock();
 
