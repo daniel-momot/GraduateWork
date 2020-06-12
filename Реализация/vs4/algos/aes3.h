@@ -64,6 +64,119 @@ const void* get_func(void* page) {
 		0x61									// popa
 	};
 
+
+
+	// AddRoundKey, AddRoundConstant, ExpandRoundKey
+
+	const byte b[] = {
+		0x60,								// pusha
+		0x92,								// xchg   edx,eax
+		0x87, 0xFE,							// xchg   esi,edi
+		0x8B, 0x46, 0x1C,					// mov    eax, [esi+0x1c]
+		0xC1, 0xC8, 0x08,					// ror    eax,0x8
+											//   <---------------------|
+		0x8B, 0x5E, 0x10,					// mov    ebx, [esi+0x10]  |
+		0x31, 0x1E,							// xor    [esi],ebx        |
+		0xA5,								// movsd                   |
+		0xFF, 0xD0,							// call   ?                |
+		0xC1, 0xC8, 0x08,					// ror    eax,0x8          |
+		0xE2, 0xF3,							// loop   -----------------|
+		0x31, 0xD0,							// xor    eax,edx
+		0xB1, 0x04,							// mov    cl,0x4
+											//   <---------------------|
+		0x31, 0x06,							// xor    [esi],eax        |
+		0xAD,								// lodsd                   |
+		0xE2, 0xFB,							// loop   -----------------|
+		0x61								// popa
+	};
+
+	const byte shift_rows[] = {
+		0x60,								// pusha
+		0xB1, 0x10,							// mov    cl,0x10
+											//   <---------------------|
+		0xAC,								// lods                    |
+		0xFF, 0xD0,							// call   ?
+
+		0x52,								// push   edx
+		0x89, 0xD3,							// mov    ebx,edx
+		0x83, 0xE3, 0x03,					// and    ebx,0x3
+		0xC1, 0xEA, 0x02,					// shr    edx,0x2
+		0x29, 0xDA,							// sub    edx,ebx
+		0x83, 0xE2, 0x03,					// and    edx,0x3
+		0x8D, 0x1C, 0x93,					// lea    ebx,[ebx+edx*4]
+		0x88, 0x04, 0x1F,					// mov    [edi+ebx*1],al
+		0x5A,								// pop    edx
+		0x42,								// inc    edx              |
+
+		0xE2, 0xE5,							// loop   -----------------|
+		0x61								// popa
+	};
+
+	const byte mix_columns[] = {
+		0x60,								// pusha
+		0x8B, 0x07,							// mov    eax,[edi]
+		0x89, 0xC3,							// mov    ebx,eax
+		0xC1, 0xC8, 0x08,					// ror    eax,0x8
+		0x89, 0xC2,							// mov    edx,eax
+		0x31, 0xD8,							// xor    eax,ebx
+		0xFF, 0xD5,							// call   ebp
+		0x31, 0xD0,							// xor    eax,edx
+		0xC1, 0xCB, 0x10,					// ror    ebx,0x10
+		0x31, 0xD8,							// xor    eax,ebx
+		0xC1, 0xCB, 0x08,					// ror    ebx,0x8
+		0x31, 0xD8,							// xor    eax,ebx
+		0xAB,								// stos
+		0xE2, 0xE4,							// loop   ?
+		0x61,								// popa
+		0xE9, 0xFC, 0xFF, 0xFF, 0xFF		// jmp    ?
+	};
+
+
+
+
+
+	//const byte fin[] = {
+	//	0x5D, 0x5F, 0x5E, 0x5A, 0x59, 0x5B, 0x58 // pop ebp, edi, esi, edx, ecx, ebx, eax
+	//};
+
+	//memcpy(place, init, sizeof(init));
+	//place = (byte*) place + sizeof(init);
+
+	//memcpy(place, mult, sizeof(mult));
+	//place = (byte*) place + sizeof(mult);
+
+	//memcpy(place, fin, sizeof(fin));
+	//place = (byte*) place + sizeof(fin);
+
+	//memcpy(place, sub_byte1, sizeof(sub_byte1));
+	//place = (byte*) place + sizeof(sub_byte1);
+
+	//memcpy(place, sub_byte2, sizeof(sub_byte2));
+	//place = (byte*) place + sizeof(sub_byte2);
+
+	//memcpy(place, sub_byte3, sizeof(sub_byte3));
+	//place = (byte*) place + sizeof(sub_byte3);
+
+	//memcpy(place, sub_byte4, sizeof(sub_byte4));
+	//place = (byte*) place + sizeof(sub_byte4);
+
+	//memcpy(place, sub_byte5, sizeof(sub_byte5));
+	//place = (byte*) place + sizeof(sub_byte5);
+
+	//memcpy(place, b1, sizeof(b1));
+	//place = (byte*) place + sizeof(b1);
+
+	//memcpy(place, b2, sizeof(b2));
+	//place = (byte*) place + sizeof(b2);
+
+	//memcpy(place, b3, sizeof(b3));
+	//place = (byte*) place + sizeof(b3);
+
+	memcpy(place, mix_columns, sizeof(mix_columns));
+	place = (byte*) place + sizeof(mix_columns);
+
+
+
 	const byte mult[] = {
 		//0xE8, 0x10, 0x00, 0x00, 0x00,	// call   15 <_main+0x15>
 		0x51,							// push   ecx
@@ -110,122 +223,10 @@ const void* get_func(void* page) {
 		0xC3								// ret
 	};
 
-	// AddRoundKey, AddRoundConstant, ExpandRoundKey
-
-	const byte b1[] = {
-		0x60,								// pusha
-		0x92,								// xchg   edx,eax
-		0x87, 0xFE,							// xchg   esi,edi
-		0x8B, 0x46, 0x1C,					// mov    eax, [esi+0x1c]
-		0xC1, 0xC8, 0x08,					// ror    eax,0x8
-	};
-
-	const byte b2[] = {
-											//   <---------------------|
-		0x8B, 0x5E, 0x10,					// mov    ebx, [esi+0x10]  |
-		0x31, 0x1E,							// xor    [esi],ebx        |
-		0xA5,								// movsd                   |
-		0xE8, 0xFC, 0xFF, 0xFF, 0xFF,		// call   ?                |
-		0xC1, 0xC8, 0x08,					// ror    eax,0x8    
-	};
-		
-	byte b3[] = {
-		0xE2, 0xF0,							// loop   -----------------|
-		0x31, 0xD0,							// xor    eax,edx
-		0xB1, 0x04,							// mov    cl,0x4
-											//   <---------------------|
-		0x31, 0x06,							// xor    [esi],eax        |
-		0xAD,								// lodsd                   |
-		0xE2, 0xFB,							// loop   -----------------|
-		0x61								// popa
-	};
-
-	b3[1] = (byte) (0 - sizeof(b2) - 2);
-
-
-	const byte shift_rows[] = {
-		0x60,								// pusha
-		0xB1, 0x10,							// mov    cl,0x10
-		0xAC,								// lods
-		0xE8, 0xFC, 0xFF, 0xFF, 0xFF,		// call   ?
-		0x52,								// push   edx
-		0x89, 0xD3,							// mov    ebx,edx
-		0x83, 0xE3, 0x03,					// and    ebx,0x3
-		0xC1, 0xEA, 0x02,					// shr    edx,0x2
-		0x29, 0xDA,							// sub    edx,ebx
-		0x83, 0xE2, 0x03,					// and    edx,0x3
-		0x8D, 0x1C, 0x93,					// lea    ebx,[ebx+edx*4]
-		0x88, 0x04, 0x1F,					// mov    [edi+ebx*1],al
-		0x5A,								// pop    edx
-		0x42,								// inc    edx
-		0xE2, 0xFF,							// loop   ?
-		0x61								// popa
-	};
-
-	const byte mix_columns[] = {
-		0x60,								// pusha
-		0x8B, 0x07,							// mov    eax,[edi]
-		0x89, 0xC3,							// mov    ebx,eax
-		0xC1, 0xC8, 0x08,					// ror    eax,0x8
-		0x89, 0xC2,							// mov    edx,eax
-		0x31, 0xD8,							// xor    eax,ebx
-		0xFF, 0xD5,							// call   ebp
-		0x31, 0xD0,							// xor    eax,edx
-		0xC1, 0xCB, 0x10,					// ror    ebx,0x10
-		0x31, 0xD8,							// xor    eax,ebx
-		0xC1, 0xCB, 0x08,					// ror    ebx,0x8
-		0x31, 0xD8,							// xor    eax,ebx
-		0xAB,								// stos
-		0xE2, 0xE4,							// loop   ?
-		0x61,								// popa
-		0xE9, 0xFC, 0xFF, 0xFF, 0xFF		// jmp    ?
-	};
-
-	size_t a = sizeof(mix_columns);
 
 
 
 
-
-	//const byte fin[] = {
-	//	0x5D, 0x5F, 0x5E, 0x5A, 0x59, 0x5B, 0x58 // pop ebp, edi, esi, edx, ecx, ebx, eax
-	//};
-
-	//memcpy(place, init, sizeof(init));
-	//place = (byte*) place + sizeof(init);
-
-	//memcpy(place, mult, sizeof(mult));
-	//place = (byte*) place + sizeof(mult);
-
-	//memcpy(place, fin, sizeof(fin));
-	//place = (byte*) place + sizeof(fin);
-
-	//memcpy(place, sub_byte1, sizeof(sub_byte1));
-	//place = (byte*) place + sizeof(sub_byte1);
-
-	//memcpy(place, sub_byte2, sizeof(sub_byte2));
-	//place = (byte*) place + sizeof(sub_byte2);
-
-	//memcpy(place, sub_byte3, sizeof(sub_byte3));
-	//place = (byte*) place + sizeof(sub_byte3);
-
-	//memcpy(place, sub_byte4, sizeof(sub_byte4));
-	//place = (byte*) place + sizeof(sub_byte4);
-
-	//memcpy(place, sub_byte5, sizeof(sub_byte5));
-	//place = (byte*) place + sizeof(sub_byte5);
-
-	//memcpy(place, b1, sizeof(b1));
-	//place = (byte*) place + sizeof(b1);
-
-	//memcpy(place, b2, sizeof(b2));
-	//place = (byte*) place + sizeof(b2);
-
-	//memcpy(place, b3, sizeof(b3));
-	//place = (byte*) place + sizeof(b3);
-
-	memcpy(place, mix_columns, sizeof(mix_columns));
-	place = (byte*) place + sizeof(mix_columns);
 
 
 	return page;
