@@ -25,7 +25,7 @@ void aes_asm (const byte plaintext[16], const byte key[16], byte cipher[16])  {
 	//typedef byte* (*cryptofunc)(const byte*,const byte*);
 	typedef byte* (*cryptofunc)(void);
 
-	void* page = VirtualAlloc(NULL, 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	void* page = VirtualAlloc(NULL, 2 * 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	const cryptofunc func = (cryptofunc) get_func(page);
 
 	//cipher = func(plaintext, key);
