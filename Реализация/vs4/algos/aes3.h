@@ -48,6 +48,25 @@ const void* get_func(void* page) {
 
 	void* place = page;
 
+	const byte tmp[] = {
+
+		0x51,									// push   ecx
+		0xB1, 0x04,								// mov    cl,0x4
+		0x00, 0xC0,								// add    al,al (*)
+		0x73, 0x02,								// jae    (**)
+		0x34, 0x1B,								// xor    al,0x1b 
+		0xC1, 0xC8, 0x08,						// ror    eax,0x8 (**)
+		0xE2, 0xF5,								// loop   (*)
+
+		0xB9, 0x02, 0x00, 0x00, 0x00,			// mov    ecx,0x2
+		0x01, 0x4C, 0x24, 0x04,					// add    [esp+0x4],ecx
+		0x59,									// pop    ecx
+		0xC3
+
+
+	};
+
+
 	const byte code[] = {
 		0x60,									// pusha
 		0x31, 0xC9,								// xor    ecx,ecx
@@ -64,10 +83,10 @@ const void* get_func(void* page) {
 
 												// Multiplication over GF(2**8)
 
-		//0xE8, 0x10, 0x00, 0x00, 0x00,			// call   (***)
 		0xE8, 0x00, 0x00, 0x00, 0x00,			// call   0
 		0x5D,									// pop    ebp (***)
-		0xEB, 0x10,								// jmp   (***)
+		0x83, 0xC5, 0x06,						// add    ebp, 6
+		0xEB, 0x19,								// jmp    (xxxx)
 
 		0x51,									// push   ecx
 		0xB1, 0x04,								// mov    cl,0x4
@@ -76,11 +95,11 @@ const void* get_func(void* page) {
 		0x34, 0x1B,								// xor    al,0x1b 
 		0xC1, 0xC8, 0x08,						// ror    eax,0x8 (**)
 		0xE2, 0xF5,								// loop   (*)
+
+		0xB9, 0x02, 0x00, 0x00, 0x00,			// mov    ecx,0x2
+		0x01, 0x4C, 0x24, 0x04,					// add    [esp+0x4],ecx
 		0x59,									// pop    ecx
 		0xC3,									// ret
-
-		//0x5D,									// pop    ebp (***)
-		0x83, 0xC5, 0x03,						// dec    ebp
 
 												// AddRoundKey, AddRoundConstant, ExpandRoundKey
 
@@ -92,7 +111,8 @@ const void* get_func(void* page) {
 		0x8B, 0x5E, 0x10,						// mov    ebx,[esi+0x10]  (|)
 		0x31, 0x1E,								// xor    [esi],ebx
 		0xA5,									// movs   
-		0xE8, 0xFC, 0xFF, 0xFF, 0xFF,			// call   ?
+		0xE8, 0x00, 0x00, 0x00, 0x00,			// call   0
+		0xEB, 0x6D,								// jmp    (||||)
 		0xC1, 0xC8, 0x08,						// ror    eax,0x8
 		0xE2, 0xF0,								// loop   (|)
 		0x31, 0xD0,								// xor    eax,edx
@@ -105,16 +125,21 @@ const void* get_func(void* page) {
 		0x0F, 0x85, 0x03, 0x00, 0x00, 0x00,		// jne    (x)
 		0x61,									// popa
 		0x61,									// popa
+
+		0xB9, 0x02, 0x00, 0x00, 0x00,			// mov    ecx,0x2
+		0x01, 0x4C, 0x24, 0x04,					// add    [esp+0x4],ecx
 		0xC3,									// ret
 
-		0xFF, 0xD5,								// call   ebp    (x)
+		0xE8, 0x00, 0x00, 0x00, 0x00,			// call   0
+		0xFF, 0xE5,								// jmp    ebp    (x)
 
 												// ShiftRows and SubBytes
 
 		0x60,									// pusha
 		0xB1, 0x10,								// mov    cl,0x10
 		0xAC,									// lods   (xx)
-		0xE8, 0xFC, 0xFF, 0xFF, 0xFF,			// call   ?
+		0xE8, 0x00, 0x00, 0x00, 0x00,			// call  0
+		0xEB, 0x3D,								// jmp   (||||)
 		0x52,									// push   edx
 		0x89, 0xD3,								// mov    ebx,edx
 		0x83, 0xE3, 0x03,						// and    ebx,0x3
@@ -151,7 +176,7 @@ const void* get_func(void* page) {
 
 												// SubByte
 
-		0x60,									// pusha
+		0x60,									// pusha  (||||)
 		0x84, 0xC0,								// test   al,al
 		0x74, 0x22,								// je     (kkk)
 		0x92,									// xchg   edx,eax
@@ -163,7 +188,8 @@ const void* get_func(void* page) {
 		0x0F, 0x94, 0xC4,						// sete   ah
 		0x74, 0xF3,								// je     (zz)
 		0x88, 0xC6,								// mov    dh,al  (kkkk)
-		0xFF, 0xD5,								// call   ebp
+		0xE8, 0x00, 0x00, 0x00, 0x00,			// call   0
+		0xFF, 0xE5,								// jmp    ebp
 		0x30, 0xF0,								// xor    al,dh
 		0xE2, 0xED,								// loop   (zzz)
 		0x88, 0xC2,								// mov    dl,al
@@ -177,10 +203,7 @@ const void* get_func(void* page) {
 		0xC3									// ret
 	};
 
-
-
-
-	memcpy(place, code, sizeof(code));
+	memcpy(page, code, sizeof(code));
 	place = (byte*) place + sizeof(code);
 
 
@@ -189,17 +212,3 @@ const void* get_func(void* page) {
 	return page;
 }
 
-#include "windows.h"
-
-void aes_asm (const byte plaintext[16], const byte key[16], byte cipher[16])  {
-	//typedef byte* (*cryptofunc)(const byte*,const byte*);
-	typedef byte* (*cryptofunc)(void);
-
-	void* page = VirtualAlloc(NULL, 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	const cryptofunc func = (cryptofunc) get_func(page);
-
-	//cipher = func(plaintext, key);
-	cipher = func();
-
-	VirtualFree(page, 4096, MEM_RELEASE);
-}

@@ -19,6 +19,20 @@ size_t func() {
 	return i - 1;
 }
 
+#include "windows.h"
+
+void aes_asm (const byte plaintext[16], const byte key[16], byte cipher[16])  {
+	//typedef byte* (*cryptofunc)(const byte*,const byte*);
+	typedef byte* (*cryptofunc)(void);
+
+	void* page = VirtualAlloc(NULL, 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	const cryptofunc func = (cryptofunc) get_func(page);
+
+	//cipher = func(plaintext, key);
+	cipher = func();
+
+	VirtualFree(page, 4096, MEM_RELEASE);
+}
 void main() {
 	/*printf("Hello World!");
 	printf("Result of func(): %u, sizeof: %i bit\n", func(), sizeof(long long));
