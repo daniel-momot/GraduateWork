@@ -23,13 +23,18 @@ size_t func() {
 
 void aes_asm (const byte plaintext[16], const byte key[16], byte cipher[16])  {
 	//typedef byte* (*cryptofunc)(const byte*,const byte*);
-	typedef byte* (*cryptofunc)(void);
+	typedef byte* (*cryptofunc)(byte*);
 
 	void* page = VirtualAlloc(NULL, 2 * 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	const cryptofunc func = (cryptofunc) get_func(page);
+	size_t func_size;
+	const cryptofunc func = (cryptofunc) get_func(page, &func_size);
+	byte* arg_place = (byte*)func + func_size;
 
-	//cipher = func(plaintext, key);
-	cipher = func();
+	unsigned char concat_input[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+	memcpy(arg_place, concat_input, sizeof(concat_input));
+
+	cipher = func(arg_place);
 
 	VirtualFree(page, 4096, MEM_RELEASE);
 }
