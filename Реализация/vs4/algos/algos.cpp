@@ -123,10 +123,11 @@ void main() {
 
 	printf("Control values: ");
 
-	size_t sizes[] = { 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
+	size_t sizes[] = { 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
 
 	size_t row_length = sizeof(sizes)/sizeof(size_t);
 	size_t rows_num = 10;
+	size_t call_times = 100;
 
 	std::vector< std::vector<double> > rows1(rows_num, std::vector<double>(row_length));
 	std::vector< std::vector<double> > rows2(rows_num, std::vector<double>(row_length));
@@ -134,13 +135,18 @@ void main() {
 
 	for (size_t i = 0; i < rows_num; i++) {
 		for (size_t p = 0; p < row_length; p++) {
-			rows1[i][p] = get_time1(sizes[p], 100);
-			rows2[i][p] = get_time2(sizes[p], 100);
-			rows_m[i][p] = get_time_c(sizes[p], 100);
+			rows1[i][p] = get_time1(sizes[p], call_times);
+			rows2[i][p] = get_time2(sizes[p], call_times);
+			rows_m[i][p] = get_time_c(sizes[p], call_times);
 		}
 	}
 
-	printf("\nx = [ ");
+	printf("\n");
+	printf("Row length: %i.\n", row_length);
+	printf("Rows number: %i.\n", rows_num);
+	printf("Calls: %i.\n", call_times);
+
+	printf("x = [ ");
 	for (size_t i = 0; i < row_length; i++) {
 		printf("%i, ", sizes[i]);
 	}
