@@ -8,7 +8,7 @@
 
 #include <time.h>
 #include <stdlib.h>
-#include <chrono>
+
 
 double get_frequency() {
 	LARGE_INTEGER li;
@@ -123,7 +123,7 @@ void main() {
 
 	printf("Control values: ");
 
-	size_t sizes[] = { 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
+	size_t sizes[] = { 50, 100, 150, 200, 250, 300, 350, 400, 450, 600 };
 
 	size_t row_length = sizeof(sizes)/sizeof(size_t);
 	size_t rows_num = 10;
