@@ -151,6 +151,7 @@
     <ClInclude Include="aes1.h" />
     <ClInclude Include="aes2.h" />
     <ClInclude Include="aes3.h" />
+    <ClInclude Include="low_level.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

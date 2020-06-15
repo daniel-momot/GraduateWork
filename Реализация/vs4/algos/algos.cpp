@@ -1,83 +1,188 @@
 #include <string>
+#include <windows.h>
+#include <vector>
 
 #include "aes1.h"
 #include "aes2.h"
 #include "aes3.h"
 
 #include <time.h>
+#include <stdlib.h>
+#include <chrono>
 
-#if _WIN32 || _WIN64
-#if _WIN64
-#define ENVIRONMENT64
-#else
-#define ENVIRONMENT32
-#endif
-#endif
-
-size_t func() {
-	size_t i = 0;
-	return i - 1;
+double get_frequency() {
+	LARGE_INTEGER li;
+    if(!QueryPerformanceFrequency(&li)) {
+		throw std::exception("Can not get counter frequency.\n");
+	}
+	return double(li.QuadPart);
 }
 
-#include "windows.h"
-
-void aes_asm (const byte plaintext[16], const byte key[16], byte cipher[16])  {
-	//typedef byte* (*cryptofunc)(const byte*,const byte*);
-	typedef byte* (*cryptofunc)(byte*);
-
-	void* page = VirtualAlloc(NULL, 2 * 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	size_t func_size;
-	const cryptofunc func = (cryptofunc) get_func(page, &func_size);
-	byte* arg_place = (byte*)func + func_size;
-
-	unsigned char concat_input[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
-		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-	memcpy(arg_place, concat_input, sizeof(concat_input));
-
-	cipher = func(arg_place);
-
-	VirtualFree(page, 4096, MEM_RELEASE);
+std::vector<byte*> get_blocks(size_t blocks_num, size_t chunk_sz) {
+	srand((unsigned int) time(NULL));
+	std::vector<byte*> out(blocks_num);
+	for (size_t i = 0; i < blocks_num; i++) {
+		out[i] = (byte*) malloc(chunk_sz);
+		for (size_t j = 0; j < chunk_sz; j++) {
+			out[i][j] = (byte) rand();
+		}
+	}
+	return out;
 }
+
+void free_blocks(std::vector<byte*>& mem) {
+	for (size_t i = 0; i < mem.size(); i++) {
+		free(mem[i]);
+	}
+}
+
+double get_time1(size_t packets_size, size_t packets_number) {
+	std::vector<byte*> inputs = get_blocks(packets_size, 16);
+	std::vector<byte*> keys = get_blocks(packets_size, 16);
+	std::vector<byte*> results = get_blocks(packets_size, 16);
+	LARGE_INTEGER point1, point2;
+	double time = 0;
+	byte control = 0; // чтобы не вызовы функции не заоптимизировались
+
+	for (size_t j = 0; j < packets_number; j++) {
+		QueryPerformanceCounter(&point1);
+		for (size_t i = 0; i < packets_size; i++) {
+			AESEncryption(inputs[i], keys[i], results[i]);
+		}
+		QueryPerformanceCounter(&point2);
+		for (size_t i = 0; i < packets_size; i++) {
+			control += results[i][0];
+		}
+		time += ((double) point2.QuadPart - point1.QuadPart) / get_frequency();
+	}
+	
+	//printf("Func1: ps = %i, pn = %i, time: %f, ctrl: %c", packets_size, packets_number, time, control);
+	printf("%c", control);
+	free_blocks(inputs);
+	free_blocks(keys);
+	free_blocks(results);
+
+	return time;
+}
+
+double get_time2(size_t packets_size, size_t packets_number) {
+	std::vector<byte*> inputs = get_blocks(packets_size, 16);
+	std::vector<byte*> keys = get_blocks(packets_size, 16);
+	std::vector<byte*> results = get_blocks(packets_size, 16);
+	LARGE_INTEGER point1, point2;
+	double time = 0;
+	byte control = 0; // чтобы не вызовы функции не заоптимизировались
+
+	for (size_t j = 0; j < packets_number; j++) {
+		QueryPerformanceCounter(&point1);
+		for (size_t i = 0; i < packets_size; i++) {
+			EncryptAES128(inputs[i], keys[i], results[i]);
+		}
+		QueryPerformanceCounter(&point2);
+		for (size_t i = 0; i < packets_size; i++) {
+			control += results[i][0];
+		}
+		time += ((double) point2.QuadPart - point1.QuadPart) / get_frequency();
+	}
+	
+	//printf("Func1: ps = %i, pn = %i, time: %f, ctrl: %c", packets_size, packets_number, time, control);
+	printf("%c", control);
+	free_blocks(inputs);
+	free_blocks(keys);
+	free_blocks(results);
+
+	return time;
+}
+
+double get_time_c(size_t packets_size, size_t packets_number) {
+	std::vector<byte*> inputs = get_blocks(packets_size, 32);
+	LARGE_INTEGER point1, point2;
+	double time = 0;
+	byte control = 0; // чтобы не вызовы функции не заоптимизировались
+
+	for (size_t j = 0; j < packets_number; j++) {
+		QueryPerformanceCounter(&point1);
+		for (size_t i = 0; i < packets_size; i++) {
+			E(inputs[i]);
+		}
+		QueryPerformanceCounter(&point2);
+		for (size_t i = 0; i < packets_size; i++) {
+			control += inputs[i][0];
+		}
+		time += ((double) point2.QuadPart - point1.QuadPart) / get_frequency();
+	}
+	
+	//printf("Func1: ps = %i, pn = %i, time: %f, ctrl: %c", packets_size, packets_number, time, control);
+	printf("%c", control);
+	free_blocks(inputs);
+
+	return time;
+}
+
 void main() {
-	/*printf("Hello World!");
-	printf("Result of func(): %u, sizeof: %i bit\n", func(), sizeof(long long));
-	system("pause");*/
 
-    unsigned char plaintext[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
-    unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
-    unsigned char expected_ciphertext[] = {0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30, 0xd8, 0xcd, 0xb7, 0x80, 0x70, 0xb4, 0xc5, 0x5a};
-    unsigned char ciphertext[16];
+	printf("Control values: ");
 
-	unsigned char concat_input[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
-		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+	size_t sizes[] = { 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
 
-	size_t t1, t2;
-	t1 = clock();
-	for (size_t i = 0; i < 1000; i++)
-		E(concat_input);
-	t2 = clock();
+	size_t row_length = sizeof(sizes)/sizeof(size_t);
+	size_t rows_num = 10;
 
-	double diff1 = (double(t2 - t1)) / CLOCKS_PER_SEC;
+	std::vector< std::vector<double> > rows1(rows_num, std::vector<double>(row_length));
+	std::vector< std::vector<double> > rows2(rows_num, std::vector<double>(row_length));
+	std::vector< std::vector<double> > rows_m(rows_num, std::vector<double>(row_length));
 
-	t1 = clock();
-	for (size_t i = 0; i < 1000; i++)
-		AESEncryption(plaintext, keyExpansion(key), ciphertext);
-	t2 = clock();
+	for (size_t i = 0; i < rows_num; i++) {
+		for (size_t p = 0; p < row_length; p++) {
+			rows1[i][p] = get_time1(sizes[p], 100);
+			rows2[i][p] = get_time2(sizes[p], 100);
+			rows_m[i][p] = get_time_c(sizes[p], 100);
+		}
+	}
 
-	double diff2 = (double(t2 - t1)) / CLOCKS_PER_SEC;
+	printf("\nx = [ ");
+	for (size_t i = 0; i < row_length; i++) {
+		printf("%i, ", sizes[i]);
+	}
+	printf("]\n\n");
 
-	t1 = clock();
-	for (size_t i = 0; i < 1000; i++)
-		EncryptAES128(plaintext, key, ciphertext);
-	t2 = clock();
+	for (size_t i = 0; i < rows_num; i++) {
+		printf("Alg1.append( (", i);
+		for (size_t p = 0; p < row_length; p++) {
+				printf("%f, ", rows1[i][p]);
+		}
+		printf(") )\n");
+	}
 
-	double diff3 = (double(t2 - t1)) / CLOCKS_PER_SEC;
+	printf("\n");
+	for (size_t i = 0; i < rows_num; i++) {
+		printf("Alg2.append( (", i);
+		for (size_t p = 0; p < row_length; p++) {
+				printf("%f, ", rows2[i][p]);
+		}
+		printf(") )\n");
+	}
 
-	aes_asm(plaintext, key, ciphertext);
+	printf("\n");
+	for (size_t i = 0; i < rows_num; i++) {
+		printf("MyAlg.append( (", i);
+		for (size_t p = 0; p < row_length; p++) {
+				printf("%f, ", rows_m[i][p]);
+		}
+		printf(") )\n");
+	}
 
-	printf("Time brief: %lf secs.\n", diff1);
-	printf("Time expn1: %lf secs.\n", diff2);
-	printf("Time expn2: %lf secs.\n", diff3);
-	system("pause");
+
+	//double t1 = get_time1(10, 1000);
+	//double t2 = get_time2(10, 1000);
+	//double t3 = get_time_c(10, 1000);
+
+	//printf("\nResult: t1 = %f, t2 = %f, t3 = %f.\n", t1, t2, t3);
+
+
+	//printf("Time brief: %lf secs.\n", diff1);
+	//printf("Time expn1: %lf secs.\n", diff2);
+	//printf("Time expn2: %lf secs.\n", diff3);
+	//system("pause");
 }
 
